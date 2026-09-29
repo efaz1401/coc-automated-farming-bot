@@ -1,0 +1,158 @@
+# Clash of Clans Farming Bot — config
+# Resolution target: 1280x720 emulator window (landscape). Adjust after running tools/calibrate.py
+
+emulator:
+  type: "bluestacks"        # bluestacks | ldplayer | memu | nox | generic
+  window_title: "BlueStacks" # informational only
+  adb_serial: ""             # e.g. "emulator-5554" or "127.0.0.1:5555". Empty = first `adb devices` entry
+
+screen:
+  width: 1280
+  height: 720
+
+# Human-like timing + anti-ban
+timing:
+  min_tap_delay: 0.4
+  max_tap_delay: 1.2
+  after_attack_pause_sec: [8, 15]
+  search_pause_sec: [1.0, 2.0]
+  long_break_every_min: 45     # take a 3-8 min break every ~45 min
+  long_break_sec: [180, 480]
+  jitter_px: 4                 # random offset added to every tap
+
+# Farming strategy
+farming:
+  mode: "dead_base"            # dead_base | collector_raid
+  # "Next" through villages until loot looks good enough
+  min_gold: 1000
+  min_elixir: 1000
+  min_dark: 0               # 0 = ignore DE
+  max_searches: 60             # hit Next at most N times, then take a break / retry later
+  # Attack plan (fractional coords 0.0-1.0, converted to px at runtime)
+  # Default: 2-finger drop around collector corners. Tune with tools/calibrate.py
+  deploy_points:
+    - [0.08, 0.55]
+    - [0.12, 0.65]
+    - [0.88, 0.55]
+    - [0.85, 0.65]
+    - [0.30, 0.15]
+    - [0.70, 0.15]
+  troops:
+    barracks_slots: [0.18, 0.28, 0.38]  # fractional X of troop icons on deploy bar (Y auto)
+    troop_bar_y: 0.90
+    drop_interval_sec: [0.4, 0.9]
+    drops_per_point: 6
+  heroes: false                # drop heroes if available
+  spells: false
+  surrender_after_sec: 55      # max battle length (bot exits earlier when it ends)
+  wait_for_battle_end: false
+  return_home_fallback: [0.5, 0.92]  # blind-tap spot if Return Home is hidden by banners
+  skip_attack_when_full: true  # idle instead of farming when gold+elixir bars are full
+  full_ratio: 0.97             # bar fill ratio that counts as "full"
+
+# Dynamic army bar detection + wave deploy (cracked from reference bot)
+army:
+  slot_start_x_frac: 0.131     # center of slot 0 (168px @1280)
+  slot_step_x_frac: 0.0453     # slot pitch        (58px  @1280)
+  slot_count: 11
+  min_colorfulness: 22.0       # channel spread to consider a slot "filled"
+  min_stddev: 14.0             # luminance stddev to consider a slot "filled"
+  hold_ms: 1400                # swipe-hold duration per deploy point
+  skip_last_slots: 0           # e.g. 1 to spare a spell slot
+
+# Screen-state machine / recovery
+states:
+  match_threshold: 0.78        # template threshold for state landmarks
+  dialog_button_frac: [0.50, 0.56]  # centered green button of CoC dialogs
+
+# Storage bar fill sensing (fractional boxes; HSV ranges live in vision.py,
+# override per-resource here if your theme/client differs, e.g.:
+#   vision.storage_bars.gold: {box: [0.79, 0.042, 0.135, 0.03], hsv_lo: [...], hsv_hi: [...]}
+
+  # Full-army / collectors / training toggles
+  check_shield: true
+  collect_resources: true      # tap collectors/mines before searching
+  train_army: true             # press "Train" quick-train button after each battle
+  donate_request: false
+
+# Village Auto-Upgrade Engine
+upgrades:
+  enabled: true                    # Master switch for auto-upgrading village
+  upgrade_buildings: true          # Use Builder Suggested Upgrades
+  upgrade_heroes: true             # Upgrade heroes when available
+  upgrade_lab: true                # Upgrade troops/spells in Laboratory
+  upgrade_walls: true              # Dump excess loot into walls
+  wall_gold_trigger: 3500          # Upgrade wall when gold > 3500
+  wall_elixir_trigger: 3500        # Upgrade wall when elixir > 3500
+  reserve_gold: 200                # Keep reserve for nexting/searching
+  reserve_elixir: 200              # Keep reserve for troop training
+  reserve_dark: 0
+  max_upgrades_per_cycle: 3        # Max building upgrades to attempt per cycle
+  builder_head_frac: [0.468, 0.062] # Top-bar builder icon position (600, 45 in 1280x720)
+  lab_icon_frac: [0.36, 0.035]     # Top-bar lab research icon position
+  close_modal_frac: [0.85, 0.12]   # Standard dialog close button
+
+# Template image paths (put your own PNGs in assets/, captured at 1280x720)
+templates:
+  attack_button: "assets/attack_button.png"
+  find_match: "assets/find_match.png"
+  next_button: "assets/next_button.png"
+  surrender_button: "assets/surrender_button.png"
+  confirm_surrender: "assets/confirm_surrender.png"
+  return_home: "assets/return_home.png"
+  train_button: "assets/train_button.png"
+  quick_train: "assets/quick_train.png"
+  collect_gold: "assets/collect_gold.png"
+  collect_elixir: "assets/collect_elixir.png"
+  shield_info: "assets/shield_info.png"
+  battle_end: "assets/battle_end.png"
+  builder_face: "assets/builder_face.png"
+  suggested_upgrades: "assets/suggested_upgrades.png"
+  all_builders_busy: "assets/all_builders_busy.png"
+  upgrade_button: "assets/upgrade_button.png"
+  confirm_upgrade_gold: "assets/confirm_upgrade_gold.png"
+  confirm_upgrade_elixir: "assets/confirm_upgrade_elixir.png"
+  confirm_upgrade_hero: "assets/confirm_upgrade_hero.png"
+  confirm_upgrade_de: "assets/confirm_upgrade_de.png"
+  btn_lab_confirm: "assets/btn_lab_confirm.png"
+  btn_lab_confirm_de: "assets/btn_lab_confirm_de.png"
+  lab_busy: "assets/lab_busy.png"
+  close_modal: "assets/close_modal.png"
+  zero_builders: "assets/zero_builders.png"
+  one_builder: "assets/one_builder.png"
+  two_builders: "assets/two_builders.png"
+  finish_now: "assets/finish_now.png"
+  gem_icon: "assets/gem_icon.png"
+  confirm_text: "assets/confirm_text.png"
+  upgrade_button_dim: "assets/upgrade_button_dim.png"
+  # Optional recovery/state templates — capture when encountered; the bot
+  # works without them via heuristics, but they make detection exact:
+  reload_button: "assets/reload_button.png"        # "RELOAD GAME" text link
+  reload_dialog: "assets/reload_dialog.png"        # "Anyone there?" header
+  try_again: "assets/try_again.png"                # "Try Again" btn
+  okay_button: "assets/okay_button.png"            # generic green Okay
+  close_x: "assets/close_x.png"                    # popup close X
+  searching_opponents: "assets/searching_opponents.png"  # clouds text
+  empty_slot: "assets/empty_slot.png"              # empty troop-bar slot
+  claim_reward: "assets/claim_reward.png"          # event claim button
+  event_continue: "assets/event_continue.png"      # event continue button
+  # Shop / auto-build landmarks
+  shop_button: "assets/shop_button.png"            # Shop (hammer) button, village
+  shop_close: "assets/shop_close.png"              # red X inside the shop
+  price_gold: "assets/price_gold.png"              # gold coin price icon (shop cards)
+  price_elixir: "assets/price_elixir.png"          # elixir drop price icon (shop cards)
+
+vision:
+  match_threshold: 0.82
+  debug_save: true
+  debug_dir: "logs/last_seen"
+  # Fractional (x, y, w, h) regions of the loot numbers on the scout panel.
+  # Recalibrate for your client with: python tools/calibrate.py  (press 'l')
+  loot_boxes:
+    gold:   [0.06, 0.10, 0.16, 0.06]
+    elixir: [0.06, 0.17, 0.16, 0.06]
+    dark:   [0.06, 0.24, 0.16, 0.06]
+
+logging:
+  level: "INFO"
+  file: "logs/bot.log"

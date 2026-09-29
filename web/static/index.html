@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clash of Clans Farming Bot — Web Control Suite</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+  <!-- Top Navigation & Control Bar -->
+  <header>
+    <div class="header-brand">
+      <h1>⚔️ CoC Farming Bot</h1>
+      <span id="phase-badge" class="phase-pill">IDLE</span>
+    </div>
+
+    <!-- ADB Connection Controller -->
+    <div class="adb-panel">
+      <label for="device-select" style="color: var(--text-secondary); font-size: 0.85rem;">Device:</label>
+      <select id="device-select">
+        <option value="">Scanning...</option>
+      </select>
+      <button id="btn-scan" class="btn-secondary" style="padding: 4px 8px; font-size: 0.8rem;">🔄 Scan</button>
+      <input type="text" id="connect-addr" value="127.0.0.1:5555" style="width: 120px;">
+      <button id="btn-connect" class="btn-secondary" style="padding: 4px 10px; font-size: 0.8rem;">Connect</button>
+      <span id="conn-status" class="status-badge status-offline">● Disconnected</span>
+    </div>
+
+    <!-- Primary Bot Execution Controls -->
+    <div class="controls-panel">
+      <button id="btn-start" class="btn-start">▶ START BOT</button>
+      <button id="btn-pause" class="btn-pause" disabled>⏸ PAUSE</button>
+      <button id="btn-stop" class="btn-stop" disabled>⏹ STOP</button>
+    </div>
+  </header>
+
+  <!-- Tabs Navigation -->
+  <nav class="tab-bar">
+    <button class="tab-btn active" data-tab="dashboard">📊 Dashboard</button>
+    <button class="tab-btn" data-tab="studio">🎯 Template Studio</button>
+    <button class="tab-btn" data-tab="settings">⚙️ Settings & Strategy</button>
+    <button class="tab-btn" data-tab="logs">📜 Activity Logs</button>
+  </nav>
+
+  <!-- Main Content Areas -->
+  <main class="container">
+
+    <!-- Tab 1: Dashboard -->
+    <section id="pane-dashboard" class="tab-pane active">
+      <div class="dashboard-grid">
+
+        <!-- Left: Live Screen Preview -->
+        <div class="card">
+          <h2>
+            <span>Live Screen Display (1280x720)</span>
+            <label style="font-size: 0.85rem; font-weight: normal; color: var(--text-secondary); cursor: pointer;">
+              <input type="checkbox" id="chk-overlay" checked> Loot Box Overlay
+            </label>
+          </h2>
+
+          <div class="screen-wrapper">
+            <img id="screen-img" src="/api/screen.png?overlay=1" alt="Emulator Screen">
+          </div>
+
+          <div class="screen-tools">
+            <button id="btn-upgrade-village" class="btn-secondary" style="color: var(--accent-gold);">🔨 Upgrade Village Now</button>
+            <button id="btn-grab" class="btn-secondary">📸 Grab Screen</button>
+            <button id="btn-test-ocr" class="btn-secondary">🔍 Test OCR</button>
+            <button id="btn-test-buttons" class="btn-secondary">🎯 Test Buttons</button>
+            <button id="btn-emergency-return" class="btn-secondary" style="color: var(--danger);">🏠 Return Home</button>
+            <label style="margin-left: auto; font-size: 0.85rem; color: var(--text-muted); cursor: pointer;">
+              <input type="checkbox" id="chk-auto-refresh"> Auto-refresh (2s)
+            </label>
+          </div>
+        </div>
+
+        <!-- Right: Real-time Farming Stats -->
+        <div>
+          <div class="card">
+            <h2>Session Loot Farmed</h2>
+            <div class="stats-row">
+              <div class="stat-box">
+                <div class="stat-label gold-text">GOLD</div>
+                <div id="stat-gold" class="stat-value gold-text">0</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-label elixir-text">ELIXIR</div>
+                <div id="stat-elixir" class="stat-value elixir-text">0</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-label dark-text">DARK ELIXIR</div>
+                <div id="stat-dark" class="stat-value dark-text">0</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>Farming & Village Activity</h2>
+            <table class="details-table">
+              <tr>
+                <td style="color: var(--text-secondary);">Searches Conducted</td>
+                <td id="stat-searches" style="color: var(--text-primary);">0</td>
+              </tr>
+              <tr>
+                <td style="color: var(--text-secondary);">Villages Skipped</td>
+                <td id="stat-skips" style="color: var(--text-primary);">0</td>
+              </tr>
+              <tr>
+                <td style="color: var(--text-secondary);">Bases Attacked</td>
+                <td id="stat-attacks" style="color: var(--success);">0</td>
+              </tr>
+              <tr>
+                <td style="color: var(--text-secondary);">Buildings Upgraded</td>
+                <td id="stat-buildings" style="color: var(--accent-gold); font-weight: bold;">0</td>
+              </tr>
+              <tr>
+                <td style="color: var(--text-secondary);">Lab Researches</td>
+                <td id="stat-lab" style="color: var(--accent-elixir); font-weight: bold;">0</td>
+              </tr>
+              <tr>
+                <td style="color: var(--text-secondary);">Session Uptime</td>
+                <td id="stat-uptime" style="font-family: var(--font-mono);">00:00:00</td>
+              </tr>
+            </table>
+            <div style="margin-top: 14px; text-align: right;">
+              <button id="btn-reset-stats" class="btn-secondary" style="font-size: 0.8rem; padding: 4px 10px;">🔄 Reset Stats</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Tab 2: Template & Calibration Studio -->
+    <section id="pane-studio" class="tab-pane">
+      <div class="dashboard-grid">
+
+        <!-- Button Templates List -->
+        <div class="card">
+          <h2>Button Recognition Templates</h2>
+          <p style="color: var(--text-secondary); margin-bottom: 14px;">Templates are matched against emulator screenshots to click menus and buttons.</p>
+          <div id="templates-container" class="templates-list">
+            <!-- Populated dynamically via app.js -->
+          </div>
+        </div>
+
+        <!-- Digits & Loot Boxes -->
+        <div>
+          <div class="card">
+            <h2>Digit Templates (0-9)</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 10px; font-size: 0.85rem;">Digits are used to OCR gold, elixir, and dark elixir numbers.</p>
+            <div id="digits-container" class="digits-row">
+              <!-- Populated dynamically -->
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>Scout Loot Boxes</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 12px; font-size: 0.85rem;">Fractional regions [x, y, w, h] of loot numbers on scout panel.</p>
+            <div class="form-group">
+              <label class="gold-text">Gold Region [x, y, w, h]:</label>
+              <input type="text" id="box-gold">
+            </div>
+            <div class="form-group">
+              <label class="elixir-text">Elixir Region [x, y, w, h]:</label>
+              <input type="text" id="box-elixir">
+            </div>
+            <div class="form-group">
+              <label class="dark-text">Dark Region [x, y, w, h]:</label>
+              <input type="text" id="box-dark">
+            </div>
+            <button id="btn-calibrate-gold" class="btn-primary" style="width: 100%; margin-top: 6px;">🎯 Calibrate Gold Box from Screen</button>
+            <button id="btn-save-boxes" class="btn-secondary" style="width: 100%; margin-top: 6px;">💾 Save Loot Boxes</button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Tab 3: Settings & Strategy -->
+    <section id="pane-settings" class="tab-pane">
+      <div class="card">
+        <h2>Farming Strategy & Thresholds</h2>
+        <div class="form-grid">
+          <div>
+            <div class="form-group">
+              <label class="gold-text">Min Gold:</label>
+              <input type="number" id="cfg-min-gold">
+            </div>
+            <div class="form-group">
+              <label class="elixir-text">Min Elixir:</label>
+              <input type="number" id="cfg-min-elixir">
+            </div>
+            <div class="form-group">
+              <label class="dark-text">Min Dark Elixir (0 = ignore):</label>
+              <input type="number" id="cfg-min-dark">
+            </div>
+            <div class="form-group">
+              <label>Max Searches Before Cooldown:</label>
+              <input type="number" id="cfg-max-searches">
+            </div>
+            <div class="form-group">
+              <label>Surrender After (seconds):</label>
+              <input type="number" id="cfg-surrender">
+            </div>
+          </div>
+
+          <div>
+            <div class="form-group">
+              <label>Min Tap Delay (sec):</label>
+              <input type="number" step="0.1" id="cfg-min-tap">
+            </div>
+            <div class="form-group">
+              <label>Max Tap Delay (sec):</label>
+              <input type="number" step="0.1" id="cfg-max-tap">
+            </div>
+            <div class="form-group">
+              <label>Tap Jitter (px):</label>
+              <input type="number" id="cfg-jitter">
+            </div>
+            <div class="form-group">
+              <label>Long Break Every (minutes):</label>
+              <input type="number" id="cfg-break-interval">
+            </div>
+            <div class="form-group">
+              <label>Vision Match Threshold (0.0-1.0):</label>
+              <input type="number" step="0.01" id="cfg-threshold">
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top: 14px;">
+          <label class="checkbox-label">
+            <input type="checkbox" id="cfg-collect"> Auto-collect resource collectors/mines
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" id="cfg-train"> Auto-quick train army after battle
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" id="cfg-shield"> Check shield before attacking
+          </label>
+        </div>
+
+        <div style="margin-top: 18px; border-top: 1px solid var(--border); padding-top: 14px;">
+          <h3 style="margin-bottom: 10px; color: var(--accent-blue);">Village Auto-Upgrade Engine</h3>
+          <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 20px;">
+            <div>
+              <label class="checkbox-label">
+                <input type="checkbox" id="cfg-upg-enabled"> <strong>Master: Enable Village Auto-Upgrades</strong>
+              </label>
+              <div style="padding-left: 20px; display: flex; flex-direction: column; gap: 6px; margin-top: 6px;">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="cfg-upg-bld"> Upgrade Buildings via Builder Menu
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="cfg-upg-hero"> Upgrade Heroes when available
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="cfg-upg-lab"> Upgrade Laboratory Research
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="cfg-upg-wall"> Upgrade Walls with excess resources
+                </label>
+              </div>
+            </div>
+            <div>
+              <div class="form-group">
+                <label>Reserve Gold (kept for searching):</label>
+                <input type="number" id="cfg-reserve-gold">
+              </div>
+              <div class="form-group">
+                <label>Reserve Elixir (kept for training):</label>
+                <input type="number" id="cfg-reserve-elixir">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top: 20px;">
+          <button id="btn-save-settings" class="btn-primary" style="padding: 10px 24px;">💾 Save & Apply Settings</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab 4: Activity Logs -->
+    <section id="pane-logs" class="tab-pane">
+      <div class="card">
+        <h2>
+          <span>Live Activity & Event Stream</span>
+          <div>
+            <button id="btn-copy-logs" class="btn-secondary" style="padding: 4px 10px; font-size: 0.8rem;">📋 Copy</button>
+            <button id="btn-clear-logs" class="btn-secondary" style="padding: 4px 10px; font-size: 0.8rem;">🗑️ Clear</button>
+          </div>
+        </h2>
+        <div id="log-console" class="log-console"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Interactive Crop Modal -->
+  <div id="crop-modal" class="modal">
+    <div class="modal-content">
+      <h2 style="color: var(--accent-gold); margin-bottom: 8px;">
+        <span id="modal-crop-title">Crop Target</span>
+        <button id="btn-modal-close" class="btn-secondary" style="float: right; padding: 2px 8px;">✕</button>
+      </h2>
+      <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 8px;">
+        Click and drag a box around the target on the screenshot below, then click Save.
+      </p>
+
+      <div class="crop-canvas-wrapper">
+        <canvas id="crop-canvas" width="1280" height="720"></canvas>
+      </div>
+
+      <div style="margin-top: 12px; display: flex; justify-content: space-between; align-items: center;">
+        <span id="modal-crop-coords" style="color: var(--text-muted); font-family: var(--font-mono);">Selected: None</span>
+        <div>
+          <button id="btn-modal-save" class="btn-primary" disabled>💾 Save Selection</button>
+          <button id="btn-modal-cancel" class="btn-secondary">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
